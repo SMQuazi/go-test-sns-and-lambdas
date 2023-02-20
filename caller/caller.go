@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type SnsEvent struct {
@@ -16,14 +16,6 @@ type SnsEvent struct {
 
 func main() {
 
-	snsEvent := SnsEvent{Name: "Sayem"}
-	snsMessage, err := json.Marshal(snsEvent)
-	if err != nil {
-		fmt.Print("Failed parsing json!")
-		return
-	}
-	fmt.Println(string(snsMessage))
-
 	cfg, error := config.LoadDefaultConfig(context.TODO())
 	if error != nil {
 		fmt.Println("===error===")
@@ -31,11 +23,27 @@ func main() {
 		return
 	}
 
+	snsEvent := SnsEvent{Name: "John"}
+	snsMessage, err := json.Marshal(snsEvent)
+	if err != nil {
+		fmt.Print("Failed parsing json!")
+		return
+	}
+	snsString := string(snsMessage)
+
 	client := sns.NewFromConfig(cfg)
 	topicArn := "arn:aws:sns:us-east-2:682986148056:GoLambdaTestSNS"
+
+	publishInput := sns.PublishInput{
+		Message:  &snsString,
+		TopicArn: &topicArn,
+	}
+
+	spew.Dump(publishInput)
+
 	response, error := client.Publish(
 		context.TODO(),
-		&sns.PublishInput{Message: aws.String(string(snsMessage)), TopicArn: &topicArn},
+		&publishInput,
 	)
 	if error != nil {
 		fmt.Println("===error===")
@@ -44,5 +52,5 @@ func main() {
 	}
 
 	fmt.Println("===response===")
-	fmt.Println(response)
+	spew.Dump(response.MessageId)
 }
